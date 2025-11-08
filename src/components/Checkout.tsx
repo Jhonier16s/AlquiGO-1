@@ -11,8 +11,7 @@ import { Separator } from './ui/separator';
 import { Alert, AlertDescription } from './ui/alert';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { CreditCard, MapPin, User, CheckCircle, Loader2, FileText } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { toast } from 'sonner';
 
 interface CheckoutProps {
   onSuccess: () => void;
@@ -87,97 +86,77 @@ export function Checkout({ onSuccess, onBack }: CheckoutProps) {
         transactionType = 'rental';
       }
 
-      // Guardar transacción en Supabase
-      const transactionResponse = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-92179ba9/transactions`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({
-            items: items.map(item => ({
-              id: item.id,
-              name: item.name,
-              price: item.price,
-              quantity: item.quantity,
-              isRental: item.isRental,
-              rentalPrice: item.rentalPrice,
-              rentalDuration: item.rentalDuration,
-              seller: item.seller,
-              condition: item.condition,
-              location: item.location
-            })),
-            total: getTotalPrice() * 1.1,
-            shippingInfo,
-            paymentInfo: {
-              method: paymentInfo.method
-            },
-            transactionType
-          })
-        }
-      );
-
-      if (!transactionResponse.ok) {
-        const errorData = await transactionResponse.json();
-        console.error('Error al guardar transacción:', errorData);
-        throw new Error(errorData.error || 'Error al procesar la transacción');
-      }
-
-      const transactionData = await transactionResponse.json();
-      setTransactionId(transactionData.transactionId);
+      // Guardar transacción localmente
+      const transactionsRaw = localStorage.getItem('transactions');
+      const transactions: any[] = transactionsRaw ? JSON.parse(transactionsRaw) : [];
+      const newTransactionId = `TX-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+      const transactionRecord = {
+        id: newTransactionId,
+        userId: user.id,
+        items: items.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          isRental: item.isRental,
+          rentalPrice: item.rentalPrice,
+          rentalDuration: item.rentalDuration,
+          seller: item.seller,
+          condition: item.condition,
+          location: item.location
+        })),
+        total: getTotalPrice() * 1.1,
+        shippingInfo,
+        paymentInfo: { method: paymentInfo.method },
+        transactionType,
+        status: 'completed',
+        createdAt: new Date().toISOString(),
+      };
+      transactions.push(transactionRecord);
+      localStorage.setItem('transactions', JSON.stringify(transactions));
+      setTransactionId(newTransactionId);
 
       // Generar ID de contrato único
       const newContractId = `ALQ-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
       setContractId(newContractId);
 
-      // Guardar contrato en Supabase
-      const contractResponse = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-92179ba9/contracts`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({
-            contractId: newContractId,
-            items: items.map(item => ({
-              id: item.id,
-              name: item.name,
-              price: item.price,
-              quantity: item.quantity,
-              isRental: item.isRental,
-              rentalPrice: item.rentalPrice,
-              rentalDuration: item.rentalDuration,
-              seller: item.seller,
-              condition: item.condition,
-              location: item.location
-            })),
-            userInfo: {
-              name: shippingInfo.fullName,
-              email: user.email,
-              phone: user.phone,
-              address: `${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.postalCode}, ${shippingInfo.country}`
-            },
-            total: getTotalPrice() * 1.1,
-            transactionId: transactionData.transactionId,
-            contractContent: `Contrato generado para transacción ${transactionData.transactionId}`
-          })
-        }
-      );
-
-      if (!contractResponse.ok) {
-        const errorData = await contractResponse.json();
-        console.error('Error al guardar contrato:', errorData);
-        // No lanzamos error aquí porque la transacción ya se guardó
-      }
+      // Guardar contrato localmente
+      const contractsRaw = localStorage.getItem('contracts');
+      const contracts: any[] = contractsRaw ? JSON.parse(contractsRaw) : [];
+      const contractRecord = {
+        id: newContractId,
+        userId: user.id,
+        items: items.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          isRental: item.isRental,
+          rentalPrice: item.rentalPrice,
+          rentalDuration: item.rentalDuration,
+          seller: item.seller,
+          condition: item.condition,
+          location: item.location
+        })),
+        userInfo: {
+          name: shippingInfo.fullName,
+          email: user.email,
+          phone: user.phone,
+          address: `${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.postalCode}, ${shippingInfo.country}`
+        },
+        total: getTotalPrice() * 1.1,
+        transactionId: newTransactionId,
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        contractContent: `Contrato generado para transacción ${newTransactionId}`
+      };
+      contracts.push(contractRecord);
+      localStorage.setItem('contracts', JSON.stringify(contracts));
       
       setIsProcessing(false);
       setShowContract(true);
       
-      toast.success('¡Pago procesado exitosamente! Tu transacción y contrato han sido guardados en Supabase');
+      toast.success('¡Pago procesado exitosamente! Tu transacción y contrato han sido guardados localmente');
     } catch (error) {
       console.error('Error en el checkout:', error);
       setIsProcessing(false);
@@ -279,7 +258,7 @@ export function Checkout({ onSuccess, onBack }: CheckoutProps) {
                     <Label htmlFor="country">País</Label>
                     <Select 
                       value={shippingInfo.country} 
-                      onValueChange={(value) => handleInputChange('shipping', 'country', value)}
+                      onValueChange={(value: string) => handleInputChange('shipping', 'country', value)}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -338,7 +317,7 @@ export function Checkout({ onSuccess, onBack }: CheckoutProps) {
               <CardContent className="space-y-4">
                 <RadioGroup 
                   value={paymentInfo.method} 
-                  onValueChange={(value) => handleInputChange('payment', 'method', value)}
+                  onValueChange={(value: string) => handleInputChange('payment', 'method', value)}
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="card" id="card" />

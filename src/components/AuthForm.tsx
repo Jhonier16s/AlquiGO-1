@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Checkbox } from './ui/checkbox';
 import { LogIn, UserPlus, Loader2, Eye, EyeOff } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface AuthFormProps {
   onSuccess: () => void;
@@ -165,7 +165,7 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
 
     const success = await register(userData);
     if (success) {
-      toast.success('¡Cuenta creada exitosamente! Tus datos han sido guardados en Supabase');
+      toast.success('¡Cuenta creada exitosamente! Tus datos han sido guardados localmente');
       onSuccess();
     } else {
       setError('Error al crear la cuenta. Por favor intenta nuevamente.');

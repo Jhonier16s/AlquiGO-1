@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
 
 interface User {
   id: string;
@@ -25,73 +24,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Verificar sesión existente
-    const checkSession = async () => {
-      const savedToken = localStorage.getItem('accessToken');
-      const savedUser = localStorage.getItem('currentUser');
-      
-      if (savedToken && savedUser) {
-        try {
-          const response = await fetch(
-            `https://${projectId}.supabase.co/functions/v1/make-server-92179ba9/session`,
-            {
-              headers: {
-                'Authorization': `Bearer ${savedToken}`,
-              }
-            }
-          );
-
-          if (response.ok) {
-            const data = await response.json();
-            setUser(data.user);
-            setAccessToken(savedToken);
-          } else {
-            // Token inválido, limpiar
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('currentUser');
-          }
-        } catch (error) {
-          console.error('Error verificando sesión:', error);
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('currentUser');
-        }
+    // Verificar sesión existente localmente
+    const savedToken = localStorage.getItem('accessToken');
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedToken && savedUser) {
+      try {
+        const parsedUser: User = JSON.parse(savedUser);
+        setUser(parsedUser);
+        setAccessToken(savedToken);
+      } catch {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('currentUser');
       }
-      setIsLoading(false);
-    };
-
-    checkSession();
+    }
+    setIsLoading(false);
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
-    
     try {
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-92179ba9/signin`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${publicAnonKey}`,
-          },
-          body: JSON.stringify({ email, password })
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        setUser(data.user);
-        setAccessToken(data.accessToken);
-        localStorage.setItem('currentUser', JSON.stringify(data.user));
-        localStorage.setItem('accessToken', data.accessToken);
-        setIsLoading(false);
-        return true;
-      } else {
-        console.error('Error en login:', data.error);
+      const usersRaw = localStorage.getItem('users');
+      const users: Array<User & { password: string }> = usersRaw ? JSON.parse(usersRaw) : [];
+      const found = users.find(u => u.email === email && u.password === password);
+      if (!found) {
         setIsLoading(false);
         return false;
       }
+      const token = `tok_${Math.random().toString(36).slice(2)}.${Date.now()}`;
+      const sessionUser: User = { id: found.id, email: found.email, name: found.name, phone: found.phone };
+      setUser(sessionUser);
+      setAccessToken(token);
+      localStorage.setItem('currentUser', JSON.stringify(sessionUser));
+      localStorage.setItem('accessToken', token);
+      setIsLoading(false);
+      return true;
     } catch (error) {
       console.error('Error al iniciar sesión:', error);
       setIsLoading(false);
@@ -113,32 +79,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     acceptMarketing: boolean;
   }): Promise<boolean> => {
     setIsLoading(true);
-    
     try {
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-92179ba9/signup`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${publicAnonKey}`,
-          },
-          body: JSON.stringify(userData)
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        // Después de registrar, iniciar sesión automáticamente
-        const loginSuccess = await login(userData.email, userData.password);
-        setIsLoading(false);
-        return loginSuccess;
-      } else {
-        console.error('Error en registro:', data.error);
+      const usersRaw = localStorage.getItem('users');
+      const users: Array<User & { password: string }> = usersRaw ? JSON.parse(usersRaw) : [];
+      const exists = users.some(u => u.email === userData.email);
+      if (exists) {
         setIsLoading(false);
         return false;
       }
+      const newUser: User & { password: string } = {
+        id: `usr_${cryptoRandom()}`,
+        email: userData.email,
+        name: `${userData.name} ${userData.lastName}`.trim(),
+        phone: userData.phone,
+        password: userData.password,
+      };
+      users.push(newUser);
+      localStorage.setItem('users', JSON.stringify(users));
+      // auto login
+      const token = `tok_${Math.random().toString(36).slice(2)}.${Date.now()}`;
+      const sessionUser: User = { id: newUser.id, email: newUser.email, name: newUser.name, phone: newUser.phone };
+      setUser(sessionUser);
+      setAccessToken(token);
+      localStorage.setItem('currentUser', JSON.stringify(sessionUser));
+      localStorage.setItem('accessToken', token);
+      setIsLoading(false);
+      return true;
     } catch (error) {
       console.error('Error al registrar usuario:', error);
       setIsLoading(false);
@@ -166,4 +132,16 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+}
+
+// Utilidad simple para generar IDs pseudo-aleatorios
+function cryptoRandom() {
+  // Usa crypto si está disponible; si no, fallback a Math.random
+  try {
+    const bytes = new Uint8Array(12);
+    (window.crypto || (window as any).msCrypto).getRandomValues(bytes);
+    return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+  } catch {
+    return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+  }
 }

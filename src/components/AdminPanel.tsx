@@ -519,7 +519,7 @@ export function AdminPanel({ onNavigate }: AdminPanelProps = {}) {
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <h4 className="font-medium text-blue-900 mb-2">💡 Información Técnica</h4>
                   <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• Diseñado para Supabase (PostgreSQL)</li>
+                    <li>• Diseñado para bases de datos relacionales (PostgreSQL)</li>
                     <li>• Row Level Security (RLS) implementado</li>
                     <li>• Optimizado para escalabilidad</li>
                     <li>• Integridad referencial garantizada</li>

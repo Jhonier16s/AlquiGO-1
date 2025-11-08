@@ -7,7 +7,7 @@ import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { Minus, Plus, Trash2, ShoppingBag, CreditCard } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface CartViewProps {
   onCheckout: () => void;
@@ -135,7 +135,7 @@ export function CartView({ onCheckout }: CartViewProps) {
                         {item.isRental ? (
                           <>
                             <div className="text-sm text-muted-foreground">
-                              Alquiler por {item.rentalDuration} día{item.rentalDuration > 1 ? 's' : ''}
+                              Alquiler por {item.rentalDuration ?? 0} día{(item.rentalDuration ?? 0) > 1 ? 's' : ''}
                             </div>
                             <div className="font-bold text-primary">
                               ${(item.totalRentalPrice ? item.totalRentalPrice * item.quantity : 0).toLocaleString('es-CO')}

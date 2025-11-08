@@ -12,7 +12,7 @@ import { Label } from './ui/label';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { ShoppingCart, Search, Star, Shield, Calendar, MapPin, Clock, Eye } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface ProductCatalogProps {
   onProductSelect?: (product: Product) => void;
@@ -669,7 +669,7 @@ export function ProductCatalog({ onProductSelect }: ProductCatalogProps = {}) {
                           <Label htmlFor="rental-duration">Duración</Label>
                           <Select
                             value={rentalDuration.toString()}
-                            onValueChange={(value) => setRentalDuration(parseInt(value))}
+                            onValueChange={(value: string) => setRentalDuration(parseInt(value))}
                           >
                             <SelectTrigger>
                               <SelectValue />

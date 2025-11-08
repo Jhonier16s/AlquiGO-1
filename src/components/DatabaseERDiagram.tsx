@@ -426,7 +426,7 @@ export function DatabaseERDiagram() {
       {/* Consideraciones de Implementación */}
       <Card>
         <CardHeader>
-          <CardTitle>Consideraciones de Implementación en Supabase</CardTitle>
+          <CardTitle>Consideraciones de Implementación</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -435,7 +435,7 @@ export function DatabaseERDiagram() {
               <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                 <li>Row Level Security (RLS) habilitado en todas las tablas</li>
                 <li>Políticas de acceso basadas en roles de usuario</li>
-                <li>Autenticación integrada con Supabase Auth</li>
+                <li>Autenticación local o mediante proveedor externo</li>
               </ul>
             </div>
             

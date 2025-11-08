@@ -16,8 +16,8 @@ import {
   AlertCircle,
   PackageOpen
 } from 'lucide-react';
-import { getFromSupabase } from '../utils/supabase/client';
-import { toast } from 'sonner@2.0.3';
+// Eliminado getFromSupabase (antes Supabase). Ahora lectura localStorage.
+import { toast } from 'sonner';
 
 interface Transaction {
   id: string;
@@ -55,19 +55,16 @@ export function UserTransactions() {
   const loadUserData = async () => {
     setIsLoading(true);
     setError('');
-    
     try {
-      // Cargar transacciones
-      const transactionsResponse = await getFromSupabase('/user/transactions', accessToken!);
-      if (transactionsResponse.success) {
-        setTransactions(transactionsResponse.transactions);
-      }
-
-      // Cargar contratos
-      const contractsResponse = await getFromSupabase('/user/contracts', accessToken!);
-      if (contractsResponse.success) {
-        setContracts(contractsResponse.contracts);
-      }
+      const allTransactionsRaw = localStorage.getItem('transactions');
+      const allContractsRaw = localStorage.getItem('contracts');
+      const allTransactions: any[] = allTransactionsRaw ? JSON.parse(allTransactionsRaw) : [];
+      const allContracts: any[] = allContractsRaw ? JSON.parse(allContractsRaw) : [];
+      // Filtrar por usuario
+      const userTransactions = allTransactions.filter(t => t.userId === user?.id);
+      const userContracts = allContracts.filter(c => c.userId === user?.id);
+      setTransactions(userTransactions);
+      setContracts(userContracts);
     } catch (err) {
       console.error('Error cargando datos del usuario:', err);
       setError('Error al cargar tus datos. Por favor intenta nuevamente.');

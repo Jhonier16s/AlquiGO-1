@@ -1,7 +1,10 @@
 "use client";
 
-import { useTheme } from "next-themes@0.4.6";
-import { Toaster as Sonner, ToasterProps } from "sonner@2.0.3";
+// If next-themes is not installed, fallback to system theme logic.
+// Removed versioned import specifier.
+// Simple theme hook fallback (avoids Node require in browser-only context)
+const useTheme = () => ({ theme: "light" });
+import { Toaster as Sonner, ToasterProps } from "sonner";
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme();

@@ -20,7 +20,7 @@ import {
   CreditCard,
   Settings
 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface ContactForm {
   category: string;
@@ -135,7 +135,7 @@ export function ContactsPage() {
                     <Label htmlFor="category">Categoría *</Label>
                     <Select 
                       value={formData.category} 
-                      onValueChange={(value) => handleInputChange('category', value)}
+                      onValueChange={(value: string) => handleInputChange('category', value)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecciona una categoría" />
@@ -154,7 +154,7 @@ export function ContactsPage() {
                     <Label htmlFor="urgency">Prioridad</Label>
                     <Select 
                       value={formData.urgency} 
-                      onValueChange={(value) => handleInputChange('urgency', value)}
+                      onValueChange={(value: string) => handleInputChange('urgency', value)}
                     >
                       <SelectTrigger>
                         <SelectValue />
