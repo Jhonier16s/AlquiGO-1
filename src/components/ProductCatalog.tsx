@@ -355,7 +355,7 @@ export function ProductCatalog({ onProductSelect }: ProductCatalogProps = {}) {
               </div>
             </CardContent>
             
-            <CardFooter className="p-4 pt-0 space-y-2">
+            <CardFooter className="p-4 pt-0 space-y-2 flex-col">
               {/* Ver detalles button */}
               <Button
                 variant="secondary"
