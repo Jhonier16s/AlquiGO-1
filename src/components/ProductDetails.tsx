@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Product, useCart } from './CartContext';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -212,7 +212,35 @@ const productSpecifications: Record<string, { specifications: Record<string, str
   }
 };
 
-export function ProductDetails({ product, onBack }: ProductDetailsProps) {
+// Normalización defensiva del producto para evitar errores si faltan campos
+function normalizeProduct(raw: Product): Product {
+  // Clonar y aplicar defaults mínimos
+  const fallbackSeller = {
+    id: raw?.seller?.id || 'unknown',
+    name: raw?.seller?.name || 'Vendedor',
+    avatar: raw?.seller?.avatar || '',
+    rating: typeof raw?.seller?.rating === 'number' ? raw.seller.rating : 0,
+    reviewCount: typeof raw?.seller?.reviewCount === 'number' ? raw.seller.reviewCount : 0,
+    verifiedSeller: !!raw?.seller?.verifiedSeller,
+    memberSince: raw?.seller?.memberSince || new Date().toISOString()
+  };
+  return {
+    id: raw?.id || '0',
+    name: raw?.name || 'Producto',
+    price: typeof raw?.price === 'number' ? raw.price : 0,
+    image: raw?.image || '',
+    description: raw?.description || 'Descripción no disponible.',
+    category: raw?.category || 'general',
+    seller: fallbackSeller,
+    availableForRent: !!raw?.availableForRent,
+    availableForSale: !!raw?.availableForSale,
+    condition: raw?.condition || 'good',
+    location: raw?.location || 'Colombia'
+  };
+}
+
+export function ProductDetails({ product: incomingProduct, onBack }: ProductDetailsProps) {
+  const product = useMemo(() => normalizeProduct(incomingProduct), [incomingProduct]);
   const { addToCart } = useCart();
   const [rentalUnit, setRentalUnit] = useState<'hours' | 'days' | 'weeks' | 'months'>('days');
   const [rentalDuration, setRentalDuration] = useState(1);
@@ -341,14 +369,14 @@ export function ProductDetails({ product, onBack }: ProductDetailsProps) {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center space-x-3">
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src={product.seller.avatar} />
-                  <AvatarFallback>{product.seller.name.substring(0, 2)}</AvatarFallback>
+                  <Avatar className="h-12 w-12">
+                  <AvatarImage src={product.seller?.avatar || ''} />
+                  <AvatarFallback>{(product.seller?.name || 'VD').substring(0, 2)}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                   <div className="flex items-center space-x-2">
-                    <h3 className="font-medium">{product.seller.name}</h3>
-                    {product.seller.verifiedSeller && (
+                    <h3 className="font-medium">{product.seller?.name || 'Vendedor'}</h3>
+                    {product.seller?.verifiedSeller && (
                       <Shield className="h-4 w-4 text-primary" />
                     )}
                   </div>
@@ -358,7 +386,7 @@ export function ProductDetails({ product, onBack }: ProductDetailsProps) {
                         <Star
                           key={i}
                           className={`w-4 h-4 ${
-                            i < Math.floor(product.seller.rating)
+                            i < Math.floor(product.seller?.rating || 0)
                               ? 'text-yellow-400 fill-current'
                               : 'text-gray-300'
                           }`}
@@ -366,11 +394,11 @@ export function ProductDetails({ product, onBack }: ProductDetailsProps) {
                       ))}
                     </div>
                     <span className="text-sm text-muted-foreground">
-                      {product.seller.rating} ({product.seller.reviewCount} reseñas)
+                      {(product.seller?.rating || 0)} ({product.seller?.reviewCount || 0} reseñas)
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Miembro desde {new Date(product.seller.memberSince).toLocaleDateString('es-CO', { 
+                    Miembro desde {new Date(product.seller?.memberSince || new Date().toISOString()).toLocaleDateString('es-CO', { 
                       year: 'numeric', 
                       month: 'long' 
                     })}

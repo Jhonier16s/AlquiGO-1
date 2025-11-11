@@ -6,6 +6,7 @@ import { AuthForm } from './components/AuthForm';
 import { HomePage } from './components/HomePage';
 import { ProductCatalog } from './components/ProductCatalog';
 import { ProductDetails } from './components/ProductDetails';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { CartView } from './components/CartView';
 import { Checkout } from './components/Checkout';
 import { DocumentsPage } from './components/DocumentsPage';
@@ -138,7 +139,11 @@ function AppContent() {
           setCurrentView('products');
           return null;
         }
-        return <ProductDetails product={selectedProduct} onBack={() => setCurrentView('products')} />;
+        return (
+          <ErrorBoundary>
+            <ProductDetails product={selectedProduct} onBack={() => setCurrentView('products')} />
+          </ErrorBoundary>
+        );
       
       case 'database-er':
         return <DatabaseERDiagram />;
